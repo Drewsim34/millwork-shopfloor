@@ -18,6 +18,7 @@ import {
   type TaskLine,
 } from "@/lib/scheduler/model";
 import { parseUnitTypesWorkbook, type ParsedUnitType } from "@/lib/scheduler/import";
+import { STARTER_UNIT_TYPES } from "@/lib/unitTypeLibrary";
 
 type TypeRecord = {
   id: string;
@@ -46,13 +47,34 @@ export function UnitTypesView() {
   const [editing, setEditing] = useState<UnitType | null>(null);
   const [importing, setImporting] = useState(false);
 
+  function loadLibrary() {
+    const now = new Date().toISOString();
+    const have = new Set(types.map((t) => t.code));
+    const missing = STARTER_UNIT_TYPES.filter((s) => !have.has(s.code));
+    if (!missing.length) { alert("Standard library already loaded — all template codes exist."); return; }
+    idb.transact(
+      missing.map((s) =>
+        idb.tx.mfgUnitTypes[id()].update({
+          code: s.code,
+          name: s.name,
+          category: s.category,
+          bom: "[]",
+          tasks: JSON.stringify(s.tasks),
+          createdAt: now,
+          updatedAt: now,
+        })
+      )
+    );
+  }
+
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-stone-500">
           {types.length} unit type{types.length === 1 ? "" : "s"} — templates copied onto units when you add them to a job.
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="subtle" onClick={loadLibrary}>✨ Load standard library</Button>
           <Button variant="subtle" onClick={() => setImporting(true)}>⬆ Import unit types (Excel)</Button>
           <Button onClick={() => setEditing({ id: "", code: "", name: "", category: "Door", bom: [], tasks: [] })}>
             + New unit type
