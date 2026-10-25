@@ -189,6 +189,7 @@ const _schema = i.schema({
       code: i.string().indexed(),
       name: i.string(),
       category: i.string().optional(),
+      material: i.string().optional(), // Wood | Metal | Both — drives line sorting
       bom: i.string().optional(),
       tasks: i.string().optional(),
       createdAt: i.date(),

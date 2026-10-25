@@ -106,6 +106,7 @@ export function TasksEditor({
             <th className="w-10 py-1 pr-1 font-medium">#</th>
             <th className="pr-1 font-medium">Process</th>
             <th className="pr-1 font-medium">Work center</th>
+            <th className="w-20 pr-1 font-medium" title="Steps this task waits on (optional)">Deps</th>
             <th className="w-16 pr-1 font-medium">Min</th>
             <th className="w-12 pr-1 text-center font-medium">Skl</th>
             <th className="w-6" />
@@ -146,6 +147,15 @@ export function TasksEditor({
                 <td className="pr-1 py-0.5">
                   <input
                     className={inputCls}
+                    value={(l.deps || []).join(",")}
+                    placeholder="—"
+                    title="Steps this task waits on (optional, comma-separated). Blank = runs after the previous step."
+                    onChange={(e) => set(i, { deps: e.target.value.split(/[^0-9]+/).map(Number).filter((n) => n > 0) })}
+                  />
+                </td>
+                <td className="pr-1 py-0.5">
+                  <input
+                    className={inputCls}
                     type="number"
                     value={l.minutes ?? ""}
                     onChange={(e) => set(i, { minutes: Number(e.target.value) || 0 })}
@@ -164,7 +174,7 @@ export function TasksEditor({
           })}
           {!lines.length && (
             <tr>
-              <td colSpan={6} className="py-2 text-center text-xs text-stone-400">
+              <td colSpan={7} className="py-2 text-center text-xs text-stone-400">
                 No tasks yet
               </td>
             </tr>

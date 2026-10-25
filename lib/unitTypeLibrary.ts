@@ -10,6 +10,7 @@ export interface StarterType {
   code: string;
   name: string;
   category: string; // Window | Door | Other
+  material?: string; // Wood | Metal | Both — drives line sorting
   bom?: BomLine[];
   tasks: TaskLine[];
 }
@@ -30,7 +31,7 @@ const prog = (s: number) => t(s + 1, "Output CNC program", "Programming", 20);
 
 export const STARTER_UNIT_TYPES: StarterType[] = [
   {
-    code: "WIN-CASE", name: "Casement Window", category: "Window",
+    code: "WIN-CASE", name: "Casement Window", category: "Window", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip stiles & rails", "Rip Saw", 30),
@@ -48,7 +49,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
   },
   {
-    code: "WIN-DH", name: "Double Hung Window", category: "Window",
+    code: "WIN-DH", name: "Double Hung Window", category: "Window", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip stiles & rails (2 sash)", "Rip Saw", 45),
@@ -66,7 +67,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
   },
   {
-    code: "WIN-FIXED", name: "Fixed Window", category: "Window",
+    code: "WIN-FIXED", name: "Fixed Window", category: "Window", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip frame stock", "Rip Saw", 20),
@@ -81,7 +82,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
   },
   {
-    code: "WIN-AWNING", name: "Awning Window", category: "Window",
+    code: "WIN-AWNING", name: "Awning Window", category: "Window", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip stiles & rails", "Rip Saw", 28),
@@ -98,7 +99,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
   },
   {
-    code: "DOOR-ENTRY", name: "Entry Door", category: "Door",
+    code: "DOOR-ENTRY", name: "Entry Door", category: "Door", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip stiles, rails & staves", "Rip Saw", 50),
@@ -115,7 +116,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
   },
   {
-    code: "SIDELITE", name: "Sidelite", category: "Door",
+    code: "SIDELITE", name: "Sidelite", category: "Door", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip frame & muntin stock", "Rip Saw", 25),
@@ -132,7 +133,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
   },
   {
-    code: "TRANSOM", name: "Transom", category: "Window",
+    code: "TRANSOM", name: "Transom", category: "Window", material: "Wood",
     tasks: [
       eng(1), prog(1),
       t(3, "Rip frame stock", "Rip Saw", 15),
@@ -148,7 +149,7 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     // Full worked example built from the Door A BoM + SOP routing. Flattens the
     // sub-assemblies (stile staves, panel core, stainless plate → glazed sash +
     // frame → finished door) into one dependency-ordered routing.
-    code: "D-A001", name: "Door A (Finished Door Unit)", category: "Door",
+    code: "D-A001", name: "Door A (Finished Door Unit)", category: "Door", material: "Both",
     bom: [
       b("Glazed Sash Unit", "Make", "SUB-GS-001"),
       b("Stile Staves", "Make", "SUB-STILESTAVE-001"),

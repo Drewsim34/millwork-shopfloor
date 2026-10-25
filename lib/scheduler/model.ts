@@ -24,6 +24,7 @@ export interface TaskLine {
   workCenter: string; // free-text (mapped to an engine work center at schedule time)
   minutes: number;
   skilled?: boolean;
+  deps?: number[]; // optional: step numbers this task waits on. Empty = run after the previous task (sequential default).
 }
 
 export interface UnitType {
@@ -31,6 +32,7 @@ export interface UnitType {
   code: string;
   name: string;
   category?: string;
+  material?: string; // Wood | Metal | Both — drives line sorting
   bom: BomLine[];
   tasks: TaskLine[];
 }
@@ -159,19 +161,34 @@ export function buildScheduleInput(units: Unit[]): ScheduleInput {
   units.forEach((u, ui) => {
     const qty = u.qty && u.qty > 0 ? u.qty : 1;
     const ops: Operation[] = [];
+    const opByStep: Record<number, string> = {}; // step number → op id, for resolving deps
+    const pending: { op: Operation; deps?: number[] }[] = [];
     (u.tasks || []).forEach((t, ti) => {
       const m = mapWorkCenter(t.workCenter);
       if (m.office) { skippedOffice++; return; }
       if (!WORK_CENTERS.some((w) => w.id === m.id) && !extra[m.id]) {
         extra[m.id] = { id: m.id, name: t.workCenter || m.id, capacity: 1, color: "#dcdcdc" };
       }
-      ops.push({
+      const op: Operation = {
         id: `${u.id}__t${ti}`,
         name: t.name || t.workCenter || `Step ${ti + 1}`,
         workCenter: m.id,
         minutes: Math.max(1, Math.round((t.minutes || 0) * qty)),
-      });
+      };
+      ops.push(op);
+      pending.push({ op, deps: t.deps });
+      opByStep[t.step && t.step > 0 ? t.step : ti + 1] = op.id;
     });
+
+    // Resolve optional per-task dependencies: a task's step numbers → the op ids
+    // of the tasks they wait on (within this unit). Deps pointing at skipped
+    // office tasks drop out; when none resolve, the op keeps the sequential default.
+    for (const { op, deps } of pending) {
+      if (deps && deps.length) {
+        const resolved = deps.map((s) => opByStep[s]).filter(Boolean);
+        if (resolved.length) op.deps = resolved;
+      }
+    }
 
     if (!ops.length) { unitsWithoutTasks++; return; }
 

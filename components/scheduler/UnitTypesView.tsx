@@ -25,6 +25,7 @@ type TypeRecord = {
   code: string;
   name: string;
   category?: string;
+  material?: string;
   bom?: string;
   tasks?: string;
 };
@@ -35,6 +36,7 @@ function toType(r: TypeRecord): UnitType {
     code: r.code,
     name: r.name,
     category: r.category,
+    material: r.material,
     bom: parseLines<BomLine>(r.bom),
     tasks: parseLines<TaskLine>(r.tasks),
   };
@@ -58,6 +60,7 @@ export function UnitTypesView() {
           code: s.code,
           name: s.name,
           category: s.category,
+          material: s.material ?? null,
           bom: JSON.stringify(s.bom ?? []),
           tasks: JSON.stringify(s.tasks),
           createdAt: now,
@@ -96,7 +99,10 @@ export function UnitTypesView() {
                   <div className="text-xs text-stone-400">{t.code}</div>
                   <div className="font-semibold text-stone-800">{t.name}</div>
                 </div>
-                {t.category && <Badge color="#3a5bd9">{t.category}</Badge>}
+                <div className="flex flex-col items-end gap-1">
+                  {t.category && <Badge color="#3a5bd9">{t.category}</Badge>}
+                  {t.material && <Badge color={t.material === "Metal" ? "#5b6b7a" : t.material === "Both" ? "#2950db" : "#9a6b3f"}>{t.material}</Badge>}
+                </div>
               </div>
               <div className="mt-2 flex gap-3 text-xs text-stone-500">
                 <span>{t.bom.length} BoM</span>
@@ -134,6 +140,9 @@ function TypeEditor({ type, onClose }: { type: UnitType; onClose: () => void }) 
   const [category, setCategory] = useState(type.category || "Door");
   const [bom, setBom] = useState<BomLine[]>(type.bom);
   const [tasks, setTasks] = useState<TaskLine[]>(type.tasks);
+  const [wood, setWood] = useState(/wood|both/i.test(type.material || ""));
+  const [metal, setMetal] = useState(/metal|both/i.test(type.material || ""));
+  const material = wood && metal ? "Both" : wood ? "Wood" : metal ? "Metal" : undefined;
 
   function save() {
     if (!code.trim() || !name.trim()) {
@@ -147,6 +156,7 @@ function TypeEditor({ type, onClose }: { type: UnitType; onClose: () => void }) 
         code: code.trim(),
         name: name.trim(),
         category,
+        material: material ?? null,
         bom: JSON.stringify(bom),
         tasks: JSON.stringify(tasks),
         updatedAt: now,
@@ -165,6 +175,17 @@ function TypeEditor({ type, onClose }: { type: UnitType; onClose: () => void }) 
           <SelectInput value={category} onChange={(e) => setCategory(e.target.value)}>
             {UNIT_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
           </SelectInput>
+        </Field>
+        <Field label="Material (sorts the production line)" className="col-span-2">
+          <div className="flex items-center gap-5 pt-2">
+            <label className="flex items-center gap-2 text-sm text-stone-700">
+              <input type="checkbox" checked={wood} onChange={(e) => setWood(e.target.checked)} /> Wood
+            </label>
+            <label className="flex items-center gap-2 text-sm text-stone-700">
+              <input type="checkbox" checked={metal} onChange={(e) => setMetal(e.target.checked)} /> Metal
+            </label>
+            <span className="text-xs text-stone-400">{material ? `→ ${material} line` : "no line set"}</span>
+          </div>
         </Field>
       </div>
 

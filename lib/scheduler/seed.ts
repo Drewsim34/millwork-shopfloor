@@ -23,6 +23,7 @@ export interface Operation {
   name: string;
   workCenter: string;
   minutes: number;
+  deps?: string[]; // explicit op-id dependencies; when set, override the sequential-within-MO default
 }
 
 export interface ManufacturingOrder {

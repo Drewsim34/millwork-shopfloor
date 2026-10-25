@@ -78,7 +78,10 @@ function buildNodes(mos: ManufacturingOrder[]): { nodes: Node[]; byId: Record<st
         mo: mo.id, moProduct: mo.product, priority: mo.priority, due: mo.due,
         deps: [], start: null, end: null, operator: null,
       };
-      if (prev) node.deps.push(prev); // sequential within MO
+      // Explicit per-task deps override the sequential default; otherwise wait on
+      // the previous op in the MO.
+      if (o.deps && o.deps.length) node.deps.push(...o.deps);
+      else if (prev) node.deps.push(prev); // sequential within MO
       nodes.push(node);
       prev = o.id;
     });

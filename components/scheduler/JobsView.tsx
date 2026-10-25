@@ -34,7 +34,7 @@ type UnitRecord = {
   qty?: number; width?: number; height?: number; thickness?: number; jambDepth?: number;
   priority?: number; due?: string; bom?: string; tasks?: string; sortOrder?: number;
 };
-type TypeRecord = { id: string; code: string; name: string; category?: string; bom?: string; tasks?: string };
+type TypeRecord = { id: string; code: string; name: string; category?: string; material?: string; bom?: string; tasks?: string };
 
 const toUnit = (r: UnitRecord): Unit => ({
   ...r,
@@ -42,7 +42,7 @@ const toUnit = (r: UnitRecord): Unit => ({
   tasks: parseLines<TaskLine>(r.tasks),
 });
 const toType = (r: TypeRecord): UnitType => ({
-  id: r.id, code: r.code, name: r.name, category: r.category,
+  id: r.id, code: r.code, name: r.name, category: r.category, material: r.material,
   bom: parseLines<BomLine>(r.bom), tasks: parseLines<TaskLine>(r.tasks),
 });
 
@@ -261,7 +261,7 @@ function UnitEditor({ unit, types, onClose }: { unit: Unit; types: UnitType[]; o
   function applyType(typeId: string) {
     const t = types.find((x) => x.id === typeId);
     if (!t) return;
-    setF((p) => ({ ...p, typeCode: t.code, category: t.category || p.category, description: p.description || t.name }));
+    setF((p) => ({ ...p, typeCode: t.code, category: t.category || p.category, material: t.material || p.material, description: p.description || t.name }));
     setTypeName(t.name);
     setBom(t.bom.map((b) => ({ ...b })));
     setTasks(t.tasks.map((t2) => ({ ...t2 })));
