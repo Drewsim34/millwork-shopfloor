@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  /* Royal blue brand palette (class names kept as `walnut-*` to match the CRM). */
+  --color-walnut-50: #eef3ff;
+  --color-walnut-100: #dce7ff;
+  --color-walnut-200: #bdd0ff;
+  --color-walnut-300: #92b1ff;
+  --color-walnut-400: #5e85fb;
+  --color-walnut-500: #3a63f0;
+  --color-walnut-600: #2950db;
+  --color-walnut-700: #2040bd;
+  --color-walnut-800: #213a96;
+  --color-walnut-900: #1e3372;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --background: #f4f6fa;
+  --foreground: #1c1917;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, unobtrusive scrollbars for the board/columns */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c7cedd transparent;
+}

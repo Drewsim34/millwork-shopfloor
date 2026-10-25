@@ -1,0 +1,242 @@
+// Shared InstantDB schema for Millwork (web CRM + mobile + this shop-floor app).
+// Keep in sync with millwork-crm/instant.schema.ts — all three apps talk to the
+// same real-time database, so the entity shapes must match. This app only reads
+// the production-scheduler entities (mfgJobs / mfgUnits / mfgUnitTypes).
+import { i } from "@instantdb/react";
+
+const _schema = i.schema({
+  entities: {
+    $users: i.entity({
+      email: i.string().unique().indexed(),
+    }),
+
+    $files: i.entity({
+      path: i.string().unique().indexed(),
+      url: i.string(),
+    }),
+
+    profiles: i.entity({
+      email: i.string().unique().indexed(),
+      name: i.string(),
+      role: i.string(),
+      active: i.boolean(),
+      salesGoal: i.number(),
+      createdAt: i.date(),
+    }),
+
+    clients: i.entity({
+      company: i.string().indexed(),
+      contactName: i.string().optional(),
+      email: i.string().optional(),
+      phone: i.string().optional(),
+      officePhone: i.string().optional(),
+      address: i.string().optional(),
+      city: i.string().optional(),
+      state: i.string().optional(),
+      type: i.string().optional(),
+      tier: i.string(),
+      status: i.string().indexed(),
+      notes: i.string().optional(),
+      createdById: i.string().optional(),
+      updatedById: i.string().optional(),
+      updatedAt: i.date().optional(),
+      createdAt: i.date(),
+    }),
+
+    deals: i.entity({
+      title: i.string(),
+      projectNumber: i.string().optional(),
+      projectType: i.string().optional(),
+      material: i.string().optional(),
+      architect: i.string().optional(),
+      builder: i.string().optional(),
+      location: i.string().optional(),
+      stage: i.string().indexed(),
+      value: i.number(),
+      probability: i.number(),
+      dateRequested: i.date().optional(),
+      quotedDate: i.date().optional(),
+      lastContactDate: i.date().optional(),
+      nextFollowUp: i.date().optional(),
+      expectedCloseDate: i.date().optional(),
+      wonDate: i.date().optional(),
+      notes: i.string().optional(),
+      attachments: i.string().optional(),
+      updatedAt: i.date().optional(),
+      sortOrder: i.number().optional(),
+      createdAt: i.date(),
+    }),
+
+    activities: i.entity({
+      date: i.date().indexed(),
+      type: i.string(),
+      importance: i.string().optional(),
+      projectLabel: i.string().optional(),
+      clientLabel: i.string().optional(),
+      notes: i.string().optional(),
+      durationMin: i.number().optional(),
+      outcome: i.string().optional(),
+      tags: i.string().optional(),
+      createdAt: i.date(),
+    }),
+
+    scheduleWeeks: i.entity({
+      startDate: i.date().indexed(),
+      weekNumber: i.number(),
+      cadence: i.string(),
+      region: i.string().optional(),
+      goal: i.string().optional(),
+      notes: i.string().optional(),
+      createdAt: i.date(),
+    }),
+
+    meetings: i.entity({
+      date: i.date().indexed(),
+      time: i.string().optional(),
+      title: i.string(),
+      location: i.string().optional(),
+      city: i.string().optional(),
+      state: i.string().optional(),
+      status: i.string(),
+      clientId: i.string().optional(),
+      clientName: i.string().optional(),
+      attendees: i.string().optional(),
+      notes: i.string().optional(),
+      followUp: i.string().optional(),
+      followUpDate: i.date().optional(),
+      createdAt: i.date(),
+    }),
+
+    expenses: i.entity({
+      date: i.date().indexed(),
+      amount: i.number(),
+      category: i.string(),
+      merchant: i.string().optional(),
+      description: i.string().optional(),
+      status: i.string().indexed(),
+      receiptUrl: i.string().optional(),
+      receiptName: i.string().optional(),
+      createdAt: i.date(),
+    }),
+
+    quotes: i.entity({
+      quoteNumber: i.number().indexed(),
+      jobName: i.string(),
+      status: i.string().indexed(),
+      architectFirm: i.string().optional(),
+      architectContact: i.string().optional(),
+      architectPhone: i.string().optional(),
+      architectEmail: i.string().optional(),
+      architectAddress: i.string().optional(),
+      builderFirm: i.string().optional(),
+      builderContact: i.string().optional(),
+      builderPhone: i.string().optional(),
+      builderEmail: i.string().optional(),
+      builderAddress: i.string().optional(),
+      designerFirm: i.string().optional(),
+      designerContact: i.string().optional(),
+      designerPhone: i.string().optional(),
+      designerEmail: i.string().optional(),
+      designerAddress: i.string().optional(),
+      ownerName: i.string().optional(),
+      ownerAddress: i.string().optional(),
+      ownerPhone: i.string().optional(),
+      jobSiteAddress: i.string().optional(),
+      truck40: i.boolean().optional(),
+      targetBudget: i.number().optional(),
+      plansDated: i.string().optional(),
+      decisionMaker: i.string().optional(),
+      specs: i.string().optional(),
+      entryRequirements: i.string().optional(),
+      hardwareBrand: i.string().optional(),
+      finishColor: i.string().optional(),
+      notes: i.string().optional(),
+      attachments: i.string().optional(),
+      proposalAmount: i.number().optional(),
+      proposalUrl: i.string().optional(),
+      proposalName: i.string().optional(),
+      revisions: i.string().optional(),
+      dealId: i.string().optional(),
+      ownerId: i.string().optional(),
+      completedAt: i.date().optional(),
+      createdAt: i.date(),
+    }),
+
+    applications: i.entity({
+      name: i.string(),
+      dob: i.string().optional(),
+      currentEmployer: i.string().optional(),
+      position: i.string().optional(),
+      yearsExperience: i.number().optional(),
+      email: i.string().optional(),
+      phone: i.string().optional(),
+      references: i.string().optional(),
+      skills: i.string().optional(),
+      notes: i.string().optional(),
+      status: i.string().indexed(),
+      createdAt: i.date().indexed(),
+    }),
+
+    messages: i.entity({
+      body: i.string(),
+      senderId: i.string().indexed(),
+      senderName: i.string(),
+      createdAt: i.date().indexed(),
+    }),
+
+    // ---- Production scheduler (shared with the CRM Production Scheduler) ----
+    mfgUnitTypes: i.entity({
+      code: i.string().indexed(),
+      name: i.string(),
+      category: i.string().optional(),
+      bom: i.string().optional(),
+      tasks: i.string().optional(),
+      createdAt: i.date(),
+      updatedAt: i.date().optional(),
+    }),
+
+    mfgJobs: i.entity({
+      jobNumber: i.string().optional(),
+      name: i.string().indexed(),
+      address: i.string().optional(),
+      customer: i.string().optional(),
+      dueDate: i.date().optional(),
+      notes: i.string().optional(),
+      createdAt: i.date(),
+      updatedAt: i.date().optional(),
+    }),
+
+    mfgUnits: i.entity({
+      jobId: i.string().indexed(),
+      mark: i.string().optional(),
+      typeCode: i.string().optional(),
+      typeName: i.string().optional(),
+      category: i.string().optional(),
+      location: i.string().optional(),
+      description: i.string().optional(),
+      material: i.string().optional(),
+      finish: i.string().optional(),
+      qty: i.number().optional(),
+      width: i.number().optional(),
+      height: i.number().optional(),
+      thickness: i.number().optional(),
+      jambDepth: i.number().optional(),
+      priority: i.number().optional(),
+      due: i.date().optional(),
+      bom: i.string().optional(),
+      tasks: i.string().optional(),
+      sortOrder: i.number().optional(),
+      createdAt: i.date(),
+      updatedAt: i.date().optional(),
+    }),
+  },
+
+  links: {},
+});
+
+type _AppSchema = typeof _schema;
+interface AppSchema extends _AppSchema {}
+const schema: AppSchema = _schema;
+
+export type { AppSchema };
+export default schema;
