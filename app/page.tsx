@@ -40,6 +40,7 @@ import { UnitTypesView } from "@/components/scheduler/UnitTypesView";
 import { AddEmployeeModal } from "@/components/entry";
 import { useOperators, type OperatorRow } from "@/lib/useOperators";
 import { useCompletionSync } from "@/lib/useCompletionSync";
+import { buildMaterialLines } from "@/lib/materialLines";
 import {
   Badge,
   Button,
@@ -83,6 +84,9 @@ export default function ProductionFloorPage() {
 
   // Roll up live op-status into completion dates on units + jobs (CRM reads these).
   useCompletionSync(allUnits, jobs, statusMap, !isLoading);
+
+  // Home-page metal/wood lines, driven by real jobs' unit materials (seed fallback).
+  const materialLines = useMemo(() => buildMaterialLines(jobs, allUnits), [jobs, allUnits]);
 
   // No real jobs entered yet → fall back to the Door A sample automatically.
   const effectiveScope = scope === "__all" && allUnits.length === 0 ? "__sample" : scope;
@@ -238,7 +242,9 @@ export default function ProductionFloorPage() {
           </p>
         )}
 
-        {view === "lines" && <LinesView operators={operators} />}
+        {view === "lines" && (
+          <LinesView operators={operators} metal={materialLines.metal} wood={materialLines.wood} fromSeed={materialLines.fromSeed} />
+        )}
         {view === "board" && (
           <FloorBoard
             byStation={byStation}

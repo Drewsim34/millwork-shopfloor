@@ -58,7 +58,7 @@ export function UnitTypesView() {
           code: s.code,
           name: s.name,
           category: s.category,
-          bom: "[]",
+          bom: JSON.stringify(s.bom ?? []),
           tasks: JSON.stringify(s.tasks),
           createdAt: now,
           updatedAt: now,
