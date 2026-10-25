@@ -19,9 +19,11 @@ function avatarColor(name: string) {
 export function CrewMatrix({
   operators,
   onToggle,
+  onDelete,
 }: {
   operators: Operator[];
   onToggle: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -63,6 +65,7 @@ export function CrewMatrix({
                 </th>
               ))}
               <th className="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-stone-500"># Stations</th>
+              {onDelete && <th className="px-2 py-2" />}
             </tr>
           </thead>
           <tbody>
@@ -103,6 +106,17 @@ export function CrewMatrix({
                     );
                   })}
                   <td className="px-2 py-2 text-center font-semibold text-stone-600">{caps.size}</td>
+                  {onDelete && (
+                    <td className="px-2 py-2 text-right">
+                      <button
+                        onClick={() => { if (confirm(`Remove ${o.name} from the roster?`)) onDelete(o.id); }}
+                        className="rounded px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-50"
+                        title="Remove employee"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  )}
                 </tr>
               );
             })}

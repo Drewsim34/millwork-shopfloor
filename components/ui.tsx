@@ -94,6 +94,36 @@ export function SelectInput(
   return <select {...props} className={cx(controlClass, props.className)} />;
 }
 
+export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={cx(controlClass, props.className)} />;
+}
+
+export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={cx(controlClass, "min-h-20", props.className)} />;
+}
+
+export function Field({
+  label,
+  children,
+  className,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+  hint?: string;
+}) {
+  return (
+    <label className={cx("block", className)}>
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500">
+        {label}
+      </span>
+      {children}
+      {hint && <span className="mt-1 block text-xs text-stone-400">{hint}</span>}
+    </label>
+  );
+}
+
 /* ------------------------------------------------------ Segmented control */
 
 export function SegmentedControl<T extends string>({

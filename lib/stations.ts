@@ -8,6 +8,7 @@
 
 import {
   OPERATORS,
+  WORK_CENTERS,
   type Operator,
   type ManufacturingOrder,
 } from "./scheduler/seed";
@@ -35,12 +36,12 @@ export const STATIONS: Station[] = [
   {
     id: "engineering", seq: 1, name: "Engineering", short: "ENG", kind: "office",
     blurb: "Shop drawings, production drawings, glass orders, hardware orders",
-    workCenters: [], color: "#8a93a6",
+    workCenters: ["eng_office"], color: "#8a93a6",
   },
   {
     id: "programming", seq: 2, name: "Programming", short: "PROG", kind: "office",
     blurb: "Output CNC files to the machines (Accord, Record, Crafter)",
-    workCenters: [], color: "#7d86c2",
+    workCenters: ["prog_office"], color: "#7d86c2",
   },
   {
     id: "mill", seq: 3, name: "Mill / Blanking", short: "MILL", kind: "shop",
@@ -217,4 +218,32 @@ export function staffingForStation(stationId: string, operators: Operator[] = OP
   const st = byId[stationId];
   if (!st) return [];
   return operators.filter((o) => st.workCenters.some((wc) => o.skills.includes(wc)));
+}
+
+// Turn a set of chosen station ids into the work-center skill ids an operator
+// needs to be counted as capable at those stations (used by the Add Employee
+// form). A station contributes all of its rolled-up work centers.
+export function workCentersForStations(stationIds: string[]): string[] {
+  const set = new Set<string>();
+  for (const sid of stationIds) {
+    const st = byId[sid];
+    if (st) st.workCenters.forEach((wc) => set.add(wc));
+  }
+  return [...set];
+}
+
+// The station ids an operator's skills already cover (inverse of the above),
+// for pre-checking the Add/Edit Employee form.
+export function stationIdsForSkills(skills: string[]): string[] {
+  return STATIONS.filter((s) => s.workCenters.some((wc) => skills.includes(wc))).map((s) => s.id);
+}
+
+// A representative work-center name for a station, used when generating a task
+// routing for a new unit. The name is chosen so the scheduler's work-center
+// mapper (mapWorkCenter) resolves it back to the right station.
+export function defaultTaskWC(st: Station): string {
+  if (st.kind === "office") return st.name; // "Engineering" / "Programming"
+  const wcId = st.workCenters.find((w) => WORK_CENTERS.some((x) => x.id === w));
+  const wc = WORK_CENTERS.find((x) => x.id === wcId);
+  return wc ? wc.name : st.name;
 }

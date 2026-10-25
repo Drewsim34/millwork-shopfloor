@@ -229,6 +229,25 @@ const _schema = i.schema({
       createdAt: i.date(),
       updatedAt: i.date().optional(),
     }),
+
+    // Live shop-floor operation status, shared across terminals. One row per
+    // operation (opKey = the floor-board operation id). Written by this
+    // shop-floor app; the CRM/mobile apps don't read it.
+    mfgOpStatus: i.entity({
+      opKey: i.string().unique().indexed(),
+      status: i.string(), // queued | active | done
+      updatedAt: i.date(),
+      updatedBy: i.string().optional(),
+    }),
+
+    // Shop-floor operator roster (editable: add/remove/toggle employees).
+    // Seeded once from the static roster; skills are work-center ids.
+    mfgOperators: i.entity({
+      name: i.string(),
+      active: i.boolean(),
+      skills: i.string(), // JSON array of work-center ids
+      createdAt: i.date(),
+    }),
   },
 
   links: {},

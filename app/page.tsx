@@ -19,7 +19,6 @@ import {
 } from "@/lib/stations";
 import { MATERIAL_META } from "@/lib/currentJobs";
 import {
-  OPERATORS,
   WORK_CENTERS,
   MANUFACTURING_ORDERS,
   type Operator,
@@ -32,9 +31,14 @@ import {
   type TaskLine,
 } from "@/lib/scheduler/model";
 import { schedule, type ScheduledOp, type ScheduleResult } from "@/lib/scheduler/engine";
-import { useFloorStatus, STATUS_META, type FloorStatus } from "@/lib/floorStatus";
+import { STATUS_META, type FloorStatus } from "@/lib/floorStatus";
+import { useSharedStatus, type OpStatusRow } from "@/lib/useSharedStatus";
 import { CrewMatrix } from "@/components/CrewMatrix";
 import { LinesView } from "@/components/LinesView";
+import { JobsView } from "@/components/scheduler/JobsView";
+import { UnitTypesView } from "@/components/scheduler/UnitTypesView";
+import { AddEmployeeModal } from "@/components/entry";
+import { useOperators, type OperatorRow } from "@/lib/useOperators";
 import {
   Badge,
   Button,
@@ -46,9 +50,8 @@ import {
   cx,
 } from "@/components/ui";
 
-type View = "lines" | "board" | "schedule" | "jobs" | "crew";
+type View = "lines" | "board" | "schedule" | "jobs" | "types" | "crew";
 
-const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 const hrs = (min: number) => (min / 60).toFixed(min % 60 === 0 ? 0 : 1);
 
 const PRIO_COLOR = ["#7a818c", "#b4485f", "#c98a17", "#5a8a3b", "#7a818c"];
@@ -63,19 +66,15 @@ type UnitRecord = {
 };
 const toUnit = (r: UnitRecord): Unit => ({ ...r, bom: parseLines<BomLine>(r.bom), tasks: parseLines<TaskLine>(r.tasks) });
 
-function fmtDate(v?: number | string): string {
-  if (v == null || v === "") return "";
-  const d = typeof v === "number" ? new Date(v) : new Date(v);
-  if (isNaN(d.getTime())) return String(v);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 export default function ProductionFloorPage() {
-  const { isLoading, error, data } = idb.useQuery({ mfgJobs: {}, mfgUnits: {} });
-  const [operators, setOperators] = useState<Operator[]>(() => clone(OPERATORS));
+  const { isLoading, error, data } = idb.useQuery({ mfgJobs: {}, mfgUnits: {}, mfgOpStatus: {}, mfgOperators: {} });
   const [view, setView] = useState<View>("lines");
   const [scope, setScope] = useState<string>("__all"); // "__all" | "__sample" | jobId
-  const { statusOf, cycle, reset } = useFloorStatus();
+  const [addEmpOpen, setAddEmpOpen] = useState(false);
+  const statusRows = (data?.mfgOpStatus ?? []) as OpStatusRow[];
+  const { map: statusMap, statusOf, cycle, reset } = useSharedStatus(statusRows);
+  const operatorRows = (data?.mfgOperators ?? []) as OperatorRow[];
+  const { operators, toggle: toggleOperator, add: addOperator, remove: removeOperator } = useOperators(operatorRows, !isLoading);
 
   const jobs = (data?.mfgJobs ?? []) as JobRecord[];
   const allUnits = (data?.mfgUnits ?? []) as UnitRecord[];
@@ -123,7 +122,7 @@ export default function ProductionFloorPage() {
     );
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eff.floorOps, statusOf]);
+  }, [eff.floorOps, statusMap]);
 
   // station load = remaining (not-done) minutes
   const stationMinutes = (ops: FloorOp[]) => ops.reduce((n, o) => n + (statusOf(o.id) === "done" ? 0 : o.minutes), 0);
@@ -138,17 +137,13 @@ export default function ProductionFloorPage() {
     }
     return best;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [byStation, statusOf]);
+  }, [byStation, statusMap]);
 
   // KPIs
   const totalRemaining = STATIONS.reduce((n, st) => n + stationMinutes(byStation[st.id] || []), 0);
   const blocked = eff.sched?.scheduled.filter((s) => s.operatorName === "UNASSIGNED").length ?? 0;
   const unitCount = eff.sample ? MANUFACTURING_ORDERS.length : eff.units.length;
   const doneCount = eff.floorOps.filter((o) => statusOf(o.id) === "done").length;
-
-  function toggleOperator(id: string) {
-    setOperators((prev) => prev.map((o) => (o.id === id ? { ...o, active: !o.active } : o)));
-  }
 
   return (
     <div className="min-h-screen">
@@ -211,12 +206,23 @@ export default function ProductionFloorPage() {
               { value: "board", label: "Floor Board" },
               { value: "schedule", label: "Schedule" },
               { value: "jobs", label: "Jobs" },
+              { value: "types", label: "Unit Types" },
               { value: "crew", label: "Crew" },
             ]}
           />
           {view === "board" && (
-            <Button variant="subtle" onClick={reset} className="text-xs">Reset station status</Button>
+            <div className="flex items-center gap-2">
+              <span className="hidden text-xs text-stone-400 sm:inline">Status syncs live across terminals</span>
+              <Button
+                variant="subtle"
+                onClick={() => { if (confirm("Clear live status for every operation on ALL terminals?")) reset(); }}
+                className="text-xs"
+              >
+                Reset status
+              </Button>
+            </div>
           )}
+          {view === "crew" && <Button onClick={() => setAddEmpOpen(true)}>+ Add employee</Button>}
         </div>
 
         {eff.unitsWithoutTasks > 0 && (
@@ -238,9 +244,17 @@ export default function ProductionFloorPage() {
           />
         )}
         {view === "schedule" && <ScheduleView result={eff.sched} />}
-        {view === "jobs" && <JobsView jobs={jobs} units={allUnits} onFocus={(id) => { setScope(id); setView("board"); }} sample={eff.sample} />}
-        {view === "crew" && <CrewMatrix operators={operators} onToggle={toggleOperator} />}
+        {view === "jobs" && (
+          <JobsView
+            selectedJobId={scope !== "__all" && scope !== "__sample" ? scope : null}
+            onSelectJob={(id) => setScope(id ?? "__all")}
+          />
+        )}
+        {view === "types" && <UnitTypesView />}
+        {view === "crew" && <CrewMatrix operators={operators} onToggle={toggleOperator} onDelete={removeOperator} />}
       </main>
+
+      <AddEmployeeModal open={addEmpOpen} onClose={() => setAddEmpOpen(false)} onAdd={addOperator} />
     </div>
   );
 }
@@ -487,36 +501,3 @@ function ScheduleView({ result }: { result: ScheduleResult | null }) {
   );
 }
 
-/* ------------------------------------------------------------------ Jobs */
-
-function JobsView({ jobs, units, onFocus, sample }: { jobs: JobRecord[]; units: UnitRecord[]; onFocus: (id: string) => void; sample: boolean }) {
-  if (jobs.length === 0) {
-    return (
-      <EmptyState
-        title="No jobs in the scheduler yet"
-        hint="Add a job and its units in the CRM Production Scheduler (Jobs tab). They'll appear here automatically. The Door A sample is loaded in the meantime."
-      />
-    );
-  }
-  const countFor = (jobId: string) => units.filter((u) => u.jobId === jobId).length;
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {jobs.map((j) => (
-        <Card key={j.id} className="p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="truncate font-semibold text-stone-800">{j.jobNumber ? `#${j.jobNumber} ` : ""}{j.name}</div>
-              {j.customer && <div className="truncate text-sm text-stone-500">{j.customer}</div>}
-            </div>
-            {j.dueDate && <Badge color="#2950db">due {fmtDate(j.dueDate)}</Badge>}
-          </div>
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-sm text-stone-500">{countFor(j.id)} unit{countFor(j.id) === 1 ? "" : "s"}</span>
-            <Button variant="subtle" className="px-2.5 py-1 text-xs" onClick={() => onFocus(j.id)}>Open on board →</Button>
-          </div>
-        </Card>
-      ))}
-      {sample && <p className="col-span-full text-xs text-stone-400">The board is currently showing the Door A sample because no job is selected.</p>}
-    </div>
-  );
-}
