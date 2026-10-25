@@ -181,7 +181,7 @@ export default function ProductionFloorPage() {
                 <option value="__all">All open jobs</option>
                 <option value="__sample">Door A (sample)</option>
                 {jobs.map((j) => (
-                  <option key={j.id} value={j.id}>{j.jobNumber ? `#${j.jobNumber} ` : ""}{j.name}</option>
+                  <option key={j.id} value={j.id}>{j.jobNumber ? `#${j.jobNumber.replace(/^#+\s*/, "")} ` : ""}{j.name}</option>
                 ))}
               </SelectInput>
             </label>

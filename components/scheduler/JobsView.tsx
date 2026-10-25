@@ -95,7 +95,7 @@ export function JobsView({
                   selectedJobId === j.id ? "bg-walnut-600 text-white" : "bg-white text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50"
                 )}
               >
-                <div className="text-sm font-medium">{j.jobNumber ? `#${j.jobNumber} ` : ""}{j.name}</div>
+                <div className="text-sm font-medium">{j.jobNumber ? `#${j.jobNumber.replace(/^#+\s*/, "")} ` : ""}{j.name}</div>
                 <div className={cx("text-xs", selectedJobId === j.id ? "text-walnut-100" : "text-stone-400")}>
                   {n} unit{n === 1 ? "" : "s"}{j.customer ? ` · ${j.customer}` : ""}
                 </div>
@@ -113,7 +113,7 @@ export function JobsView({
           <>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-semibold text-stone-800">{current.jobNumber ? `#${current.jobNumber} ` : ""}{current.name}</h2>
+                <h2 className="text-lg font-semibold text-stone-800">{current.jobNumber ? `#${current.jobNumber.replace(/^#+\s*/, "")} ` : ""}{current.name}</h2>
                 <p className="text-sm text-stone-500">
                   {[current.customer, current.address].filter(Boolean).join(" · ") || "—"}
                 </p>
@@ -206,7 +206,7 @@ function JobEditor({ job, onClose, onSaved }: { job: JobRecord; onClose: () => v
     const recId = job.id || id();
     idb.transact(
       idb.tx.mfgJobs[recId].update({
-        jobNumber: f.jobNumber.trim() || undefined,
+        jobNumber: f.jobNumber.trim().replace(/^#+\s*/, "") || undefined,
         name: f.name.trim(),
         customer: f.customer.trim() || undefined,
         address: f.address.trim() || undefined,
