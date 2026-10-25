@@ -39,6 +39,7 @@ import { JobsView } from "@/components/scheduler/JobsView";
 import { UnitTypesView } from "@/components/scheduler/UnitTypesView";
 import { AddEmployeeModal } from "@/components/entry";
 import { useOperators, type OperatorRow } from "@/lib/useOperators";
+import { useCompletionSync } from "@/lib/useCompletionSync";
 import {
   Badge,
   Button,
@@ -57,12 +58,12 @@ const hrs = (min: number) => (min / 60).toFixed(min % 60 === 0 ? 0 : 1);
 const PRIO_COLOR = ["#7a818c", "#b4485f", "#c98a17", "#5a8a3b", "#7a818c"];
 const prioColor = (p: number) => PRIO_COLOR[p] ?? "#7a818c";
 
-type JobRecord = { id: string; jobNumber?: string; name: string; customer?: string; dueDate?: number | string; address?: string };
+type JobRecord = { id: string; jobNumber?: string; name: string; customer?: string; dueDate?: number | string; address?: string; completedAt?: string };
 type UnitRecord = {
   id: string; jobId: string; mark?: string; typeCode?: string; typeName?: string; category?: string;
   location?: string; description?: string; material?: string; finish?: string;
   qty?: number; width?: number; height?: number; thickness?: number; jambDepth?: number;
-  priority?: number; due?: string; bom?: string; tasks?: string; sortOrder?: number;
+  priority?: number; due?: string; bom?: string; tasks?: string; sortOrder?: number; completedAt?: string;
 };
 const toUnit = (r: UnitRecord): Unit => ({ ...r, bom: parseLines<BomLine>(r.bom), tasks: parseLines<TaskLine>(r.tasks) });
 
@@ -79,6 +80,9 @@ export default function ProductionFloorPage() {
   const jobs = (data?.mfgJobs ?? []) as JobRecord[];
   const allUnits = (data?.mfgUnits ?? []) as UnitRecord[];
   const jobNameOf = (id: string) => jobs.find((j) => j.id === id)?.name;
+
+  // Roll up live op-status into completion dates on units + jobs (CRM reads these).
+  useCompletionSync(allUnits, jobs, statusMap, !isLoading);
 
   // No real jobs entered yet → fall back to the Door A sample automatically.
   const effectiveScope = scope === "__all" && allUnits.length === 0 ? "__sample" : scope;
@@ -144,6 +148,9 @@ export default function ProductionFloorPage() {
   const blocked = eff.sched?.scheduled.filter((s) => s.operatorName === "UNASSIGNED").length ?? 0;
   const unitCount = eff.sample ? MANUFACTURING_ORDERS.length : eff.units.length;
   const doneCount = eff.floorOps.filter((o) => statusOf(o.id) === "done").length;
+  const completeUnits = eff.sample
+    ? 0
+    : eff.units.filter((u) => u.tasks.length > 0 && u.tasks.every((_, i) => statusOf(`${u.id}__t${i}`) === "done")).length;
 
   return (
     <div className="min-h-screen">
@@ -185,7 +192,7 @@ export default function ProductionFloorPage() {
 
         {/* KPI strip */}
         <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-5">
-          <Kpi label="Units in scope" value={String(unitCount)} sub={`${doneCount} ops done`} />
+          <Kpi label="Units in scope" value={String(unitCount)} sub={`${completeUnits} complete · ${doneCount} ops done`} />
           <Kpi label="Shop hours left" value={`${hrs(totalRemaining)}h`} sub="not-done operations" />
           <Kpi label="Projected finish" value={eff.sched?.makespanLabel?.split(" ").slice(0, 3).join(" ") || "—"} sub="auto-schedule makespan" />
           <Kpi

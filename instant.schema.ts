@@ -202,6 +202,7 @@ const _schema = i.schema({
       customer: i.string().optional(),
       dueDate: i.date().optional(),
       notes: i.string().optional(),
+      completedAt: i.date().optional(), // stamped when all units complete (CRM reads this)
       createdAt: i.date(),
       updatedAt: i.date().optional(),
     }),
@@ -226,6 +227,7 @@ const _schema = i.schema({
       bom: i.string().optional(),
       tasks: i.string().optional(),
       sortOrder: i.number().optional(),
+      completedAt: i.date().optional(), // stamped when all this unit's ops are done (CRM reads this)
       createdAt: i.date(),
       updatedAt: i.date().optional(),
     }),
