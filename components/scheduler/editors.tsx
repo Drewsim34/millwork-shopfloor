@@ -150,7 +150,7 @@ export function TasksEditor({
                     value={(l.deps || []).join(",")}
                     placeholder="—"
                     title="Steps this task waits on (optional, comma-separated). Blank = runs after the previous step."
-                    onChange={(e) => set(i, { deps: e.target.value.split(/[^0-9]+/).map(Number).filter((n) => n > 0) })}
+                    onChange={(e) => { const v = e.target.value.split(/[^0-9]+/).map(Number).filter((n) => n > 0); set(i, { deps: v.length ? v : undefined }); }}
                   />
                 </td>
                 <td className="pr-1 py-0.5">

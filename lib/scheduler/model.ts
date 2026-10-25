@@ -184,9 +184,11 @@ export function buildScheduleInput(units: Unit[]): ScheduleInput {
     // of the tasks they wait on (within this unit). Deps pointing at skipped
     // office tasks drop out; when none resolve, the op keeps the sequential default.
     for (const { op, deps } of pending) {
-      if (deps && deps.length) {
-        const resolved = deps.map((s) => opByStep[s]).filter(Boolean);
-        if (resolved.length) op.deps = resolved;
+      if (deps !== undefined) {
+        // Explicit deps: resolve step numbers to op ids. Deps on skipped/office
+        // steps drop out; an all-dropped (or intentionally empty) list leaves []
+        // = a parallel root that waits on nothing (not the sequential default).
+        op.deps = deps.map((s) => opByStep[s]).filter(Boolean);
       }
     }
 

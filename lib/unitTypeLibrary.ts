@@ -15,12 +15,13 @@ export interface StarterType {
   tasks: TaskLine[];
 }
 
-const t = (step: number, name: string, workCenter: string, minutes: number, skilled = false): TaskLine => ({
+const t = (step: number, name: string, workCenter: string, minutes: number, skilled = false, deps?: number[]): TaskLine => ({
   step,
   name,
   workCenter,
   minutes,
   skilled,
+  deps,
 });
 
 const b = (name: string, makeBuy: "Make" | "Buy", code?: string, qty?: number): BomLine => ({ name, makeBuy, code, qty });
@@ -177,24 +178,24 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
     ],
     tasks: [
       eng(1), prog(1),
-      // Stile Staves (SUB-STILESTAVE-001)
-      t(3, "Rip Lumber to Stave Size", "Rip Saw", 45),
+      // Stile Staves (SUB-STILESTAVE-001) — parallel root (after programming)
+      t(3, "Rip Lumber to Stave Size", "Rip Saw", 45, false, [2]),
       t(4, "Planing – Staves", "Planer", 30),
       t(5, "Glue-Up – Stiles", "Glue Bench", 45),
       t(6, "Clamp and Cure", "Clamp Rack", 120),
-      // Panel Core (SUB-PANELCORE-001)
-      t(7, "Rip Core Lumber", "Rip Saw", 60),
+      // Panel Core (SUB-PANELCORE-001) — parallel root
+      t(7, "Rip Core Lumber", "Rip Saw", 60, false, [2]),
       t(8, "Join Panel Planks", "Jointer", 60),
       t(9, "Planing – Panel Planks", "Planer", 60),
       t(10, "Glue-Up Panel Core", "Glue Bench", 60),
       t(11, "CNC Machining – Panel", "CNC", 60, true),
-      // Stainless Mounting Plate (FR-005)
-      t(12, "Laser Cut Plate", "Laser", 10, true),
+      // Stainless Mounting Plate (FR-005) — parallel root
+      t(12, "Laser Cut Plate", "Laser", 10, true, [2]),
       t(13, "Counter Sink", "Manual Bench", 5),
       t(14, "Deburr & Edge Finish", "Manual Station", 20),
       t(15, "Quality Check & Marking", "QA", 10),
-      // Glazed Sash Unit (SUB-GS-001)
-      t(16, "Cut to Length – Stiles/Panels", "Upcut Saw", 60),
+      // Glazed Sash Unit (SUB-GS-001) — waits on stile staves (6) + panel core (11)
+      t(16, "Cut to Length – Stiles/Panels", "Upcut Saw", 60, false, [6, 11]),
       t(17, "Sanding – Panel Surface", "Sander", 10),
       t(18, "Apply Glazing Tape", "Glazing Station", 10),
       t(19, "Dry Fit Glass", "Glazing Station", 5),
@@ -204,16 +205,16 @@ export const STARTER_UNIT_TYPES: StarterType[] = [
       t(23, "Apply Exterior Bead", "Glazing Station", 10),
       t(24, "Apply Interior Bead", "Glazing Station", 10),
       t(25, "Clean and QC", "Glazing Station", 5),
-      // Frame Assembly with Hardware (SUB-FRAME-001)
-      t(26, "Rip Frame Planks", "Rip Saw", 60),
+      // Frame Assembly with Hardware (SUB-FRAME-001) — waits on stainless plate (15)
+      t(26, "Rip Frame Planks", "Rip Saw", 60, false, [15]),
       t(27, "CNC Machining – Frame", "CNC", 60, true),
       t(28, "Sanding – Frame Surface", "Sander", 10),
       t(29, "Install Brass Threshold", "Frame Station", 10),
       t(30, "Mount Hinges", "Frame Station", 10),
       t(31, "Install Strike Plate", "Frame Station", 5),
       t(32, "Install Shoot Bolt Plate", "Frame Station", 5),
-      // Finished Door (D-A001)
-      t(33, "Assembly – Frame", "Assembly Table", 60, true),
+      // Finished Door (D-A001) — waits on glazed sash (25) + frame assembly (32)
+      t(33, "Assembly – Frame", "Assembly Table", 60, true, [25, 32]),
       t(34, "Paint – Primer", "Paint Shop", 60),
       t(35, "Wrap Frame & Apply Label", "Packing", 10),
     ],
